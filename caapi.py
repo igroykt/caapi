@@ -8,6 +8,7 @@ class CAApi:
     server = ""
     user = ""
     remote_tmp = ""
+    cert_template = ""
 
     def __init__(self, server, user, remote_tmp, cert_template):
         self.server = server
