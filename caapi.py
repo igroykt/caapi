@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import configparser
-from OpenSSL import crypto
 
 class CAApi:
     server = ""
@@ -28,14 +27,21 @@ class CAApi:
         except Exception as e:
             return e
 
-    def scp(self, file):
+    def scp_put(self, source, destination):
         try:
-            self.call(f"scp -o 'StrictHostKeyChecking no' {file} {self.user}@{self.server}:{self.remote_tmp}")
+            self.call(f"scp -o 'StrictHostKeyChecking no' {source} {self.user}@{self.server}:{destination}")
             return True
         except Exception as e:
             return e
 
-    def get_domainnetbios(self):
+    def scp_get(self, source, destination):
+        try:
+            self.call(f"scp -o 'StrictHostKeyChecking no' {self.user}@{self.server}:{source} {destination}")
+            return True
+        except Exception as e:
+            return e
+
+    def get_domain_netbios(self):
         try:
             out = self.ssh("echo %USERDOMAIN%")
             return out
@@ -43,7 +49,7 @@ class CAApi:
             return e
 
     def generate_config(self, requester):
-        short_domain = self.get_domainnetbios()
+        short_domain = self.get_domain_netbios()
         config = configparser.ConfigParser()
         config['Version'] = {
             'Signature': '"$Windows NT$"'
@@ -69,9 +75,7 @@ class CAApi:
         }
         config['EnhancedKeyUsageExtension'] = {
             # server authentication OID
-            'OID': '1.3.6.1.5.5.7.3.1',
-            # client authentication OID
-            'OID': '1.3.6.1.5.5.7.3.2'
+            'OID': '1.3.6.1.5.5.7.3.1'
         }
         try:
             with open(f'/tmp/{requester}.ini', 'w') as configfile:
@@ -80,10 +84,13 @@ class CAApi:
         except Exception as e:
             return e
 
-    def request_cert(self, requester):
+    def request_cert_for(self, requester):
         try:
             self.call(f"openssl req -sha256 -key /tmp/{requester}.key -new -out /tmp/{requester}.csr -config /tmp/{requester}.ini")
-            self.scp(f"{requester}.ini {requester}.csr")
+            self.scp_put(f"/tmp/{requester}.ini, {self.remote_tmp}\\{requester}.csr")
+            self.call(f"certreq -submit -attrib 'CertificateTemplate:{self.cert_template}' {self.remote_tmp}\\{requester}.csr {self.remote_tmp}\\{requester}.cer")
+            self.scp_get(f"{self.remote_tmp}\\{requester}.cer /tmp/")
+            self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.csr {self.remote_tmp}\\{requester}.cer")
             return True
         except Exception as e:
             return e
