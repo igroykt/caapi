@@ -7,12 +7,14 @@ class CAApi:
     server = ""
     user = ""
     remote_tmp = ""
+    ca_name
     cert_template = ""
 
-    def __init__(self, server, user, remote_tmp, cert_template):
+    def __init__(self, server, user, remote_tmp, ca_name, cert_template):
         self.server = server
         self.user = user
         self.remote_tmp = remote_tmp
+        self.ca_name = ca_name
         self.cert_template = cert_template
 
     def call(self, command):
@@ -87,8 +89,8 @@ class CAApi:
     def request_cert_for(self, requester):
         try:
             self.call(f"openssl req -sha256 -key /tmp/{requester}.key -new -out /tmp/{requester}.csr -config /tmp/{requester}.ini")
-            self.scp_put(f"/tmp/{requester}.ini, {self.remote_tmp}\\{requester}.csr")
-            self.call(f"certreq -submit -attrib 'CertificateTemplate:{self.cert_template}' {self.remote_tmp}\\{requester}.csr {self.remote_tmp}\\{requester}.cer")
+            self.scp_put(f"/tmp/{requester}.csr, {self.remote_tmp}")
+            self.ssh(f"certreq -submit -config {self.ca_name} -attrib 'CertificateTemplate:{self.cert_template}' {self.remote_tmp}\\{requester}.csr {self.remote_tmp}\\{requester}.cer")
             self.scp_get(f"{self.remote_tmp}\\{requester}.cer /tmp/")
             self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.csr {self.remote_tmp}\\{requester}.cer")
             return True
