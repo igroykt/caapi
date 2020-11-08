@@ -31,7 +31,11 @@ Microsoft Certificate Authority библиотека для Python. Пригод
 # Настройка групповых политик
 В оснастке "Управление групповой политикой" создаем отдельную политику (на всякий кейс) для автоматической регистрации сертификатов и настраиваем как на скринах:
 
+*Конфигурация компьютера*
+
 ![Конфигурация компьютера](https://github.com/igroykt/caapi/blob/master/assets/gpo_comp_conf.png?raw=true)
+
+*Конфигурация пользователя*
 
 ![Конфигурация пользователя](https://github.com/igroykt/caapi/blob/master/assets/gpo_user_conf.png?raw=true)
 
