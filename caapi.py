@@ -45,22 +45,7 @@ class CAApi:
         except Exception as e:
             return e
 
-    '''def get_domain_netbios(self):
-        try:
-            out = self.ssh("echo %USERDOMAIN%")
-            return out
-        except Exception as e:
-            return e
-
-    def get_domain_hostname(self):
-        try:
-            out = self.ssh("hostname")
-            return out
-        except Exception as e:
-            return e'''
-
-
-    def generate_config_for(self, user_fullname, user_dn, user_mail, user_domain):
+    def generate_config(self, user_fullname, user_dn, user_mail, user_domain):
         dn = user_dn.split("@")
         requester = dn[0]
         config = configparser.ConfigParser()
@@ -93,20 +78,36 @@ class CAApi:
         except Exception as e:
             return e
 
-    def generate_cert_for(self, user_dn, cep_cert, cert_pass):
+    def generate_cert(self, user_dn, cert_pass, cep_cert):
         try:
             dn = user_dn.split("@")
             requester = dn[0]
             self.scp_put(f"/tmp/{requester}.ini, {self.remote_tmp}")
-            self.ssh(f"certreq -f -new -config {hostname}\{self.ca_name} {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.req")
-            self.ssh(f"certreq -f -q -config {hostname}\{self.ca_name} -sign -cert {cep_cert} {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}_signed.req")
-            self.ssh(f"certreq -submit -config {hostname}\{self.ca_name} -attrib 'CertificateTemplate: {self.cert_template}' {self.remote_tmp}\\{requester}_signed.req {self.remote_tmp}\\{requester}.cer")
+            self.ssh(f"certreq -f -new -config {self.ca_name} {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.req")
+            self.ssh(f"certreq -f -q -config {self.ca_name} -sign -cert {cep_cert} {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}_signed.req")
+            self.ssh(f"certreq -submit -config {self.ca_name} -attrib 'CertificateTemplate: {self.cert_template}' {self.remote_tmp}\\{requester}_signed.req {self.remote_tmp}\\{requester}.cer")
             self.ssh(f"certutil -addstore -f MY {self.remote_tmp}\\{requester}.cer")
             self.ssh(f"certutil -repairstore MY {user_dn}")
             self.ssh(f"certutil -p {cert_pass} -exportPFX {user_dn} {self.remote_tmp}\\{requester}.pfx")
             self.ssh(f"certutil -privatekey –delstore MY {user_dn}")
+            if not os.path.isdir(self.local_storage):
+                os.mkdir(self.local_storage)
             self.scp_get(f"{self.remote_tmp}\\{requester}.pfx, {self.local_storage}")
             self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
+            return True
+        except Exception as e:
+            return e
+
+    def revoke_cert(self, user_dn, cert_pass, reason):
+        try:
+            dn = user_dn.split("@")
+            requester = dn[0]
+            self.call(f"openssl pkcs12 -in {self.local_storage}/{requester}.pfx -out /tmp/{requester}.cer -nokeys -clcerts -passin pass:{cert_pass}")
+            code, out, err = self.call(f"openssl x509 -noout -serial -in /tmp/{requester}.cer")
+            out = out.split("=")
+            serial = out[1]
+            self.ssh(f"certutil -config {self.ca_name} -revoke {serial}")
+            self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester} {reason}")
             return True
         except Exception as e:
             return e
