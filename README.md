@@ -43,13 +43,20 @@ ssh administrator@winserv_ip 'whoami'
 ```python
 from caapi import CAApi
 
-cas = CAApi(winserv_ip, administrator_login, remote_temp_dir, local_certs_storage, ca_name, cert_template)
+cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template)
 ```
 
 # Пример
 ```python
 cert_template = "1.3.6.1.4.1.311.21.8.5651447.1341949.11750026.13543132.4387299.20.5585599.1234567"
-cas = CAApi("192.168.0.9", "administrator", "c:\\temp", "./certs","CONTOSO\dc-CONTOSO-CA-1", cert_template)
+cas = CAApi(
+    "192.168.0.9",
+    "administrator",
+    "c:\\temp", #директория для временных файлов
+    "./certs", #локальная директория хранения сертификатов
+    "CONTOSO\dc-CONTOSO-CA-1",
+    cert_template
+)
 cas.generate_config("Vasya Pupkin", "vasya@dc.example.com", "vasya@example.com", "CONTOSO")
 cas.generate_cert("vasya@dc.example.com", "123", "administrator")
 cas.revoke_cert("vasya@dc.example.com", "123", "3")
@@ -64,7 +71,11 @@ Get-CATemplate
 * generate_cert(user_dn, cert_pass, cep_cert) bool -> генерирует сертификат пользователя
 * revoke_cert(user_dn, cert_pass, reason) bool -> отзывает сертификат пользователя
 
-Название ЦС (ca_name) можно увидеть в оснастке "Центр сертификации". Название домена (user_domain) можно узнать командой "echo %USERDOMAIN%".
+Название ЦС (ca_name) можно увидеть в оснастке "Центр сертификации".
+
+Название домена (user_domain) можно узнать командой "echo %USERDOMAIN%".
+
+Название сертификата CEP обычно совпадает с именем пользователя, которому оно было выдано (см. "настройка пользователя").
 
 # Коды отзывов
 | Код | Причина                                                                                                                                         |
