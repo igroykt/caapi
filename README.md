@@ -11,7 +11,22 @@ Microsoft Certificate Authority библиотека для Python
 
 # Настройка шаблона
 В оснастке "Центр сертификации" выполняем "Шаблоны сертификации -> Управление". Создаем копию шаблона "Агент регистрации". Далее по скриншотам:
-![Общие](https://github.com/igroykt/caapi/blob/master/template_obshie.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_obshie.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_sovmestimost.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_bezopasnost.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_obrabotka.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_shifrovanie.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_subject.png?raw=true)
+
+![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_vidacha.png?raw=true)
+
+В остальных вкладках все оставляем по-умолчанию.
 
 # Методы
 * generate_config(user_fullname, user_dn, user_mail, user_domain) bool -> генерирует конфигурацию для запроса сертификата пользователя
