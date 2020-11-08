@@ -28,6 +28,13 @@ Microsoft Certificate Authority библиотека для Python. Пригод
 
 В остальных вкладках все оставляем по-умолчанию.
 
+# Настройка групповых политик
+В оснастке "Управление групповой политикой" создаем отдельную политику (на всякий кейс) для автоматической регистрации сертификатов и настраиваем как на скринах:
+
+![Конфигурация компьютера](https://github.com/igroykt/caapi/blob/master/assets/gpo_comp_conf.png?raw=true)
+
+![Конфигурация пользователя](https://github.com/igroykt/caapi/blob/master/assets/gpo_user_conf.png?raw=true)
+
 # Настройка SSH
 Говорят сейчас Windows Server по-умолчанию идет с ssh. Но если у вас обновленный сервер, то он вряд ли есть. Я ставил с репозитория [chocolatey](https://chocolatey.org). Генерируем ключ на Linux сервере:
 ```bash
