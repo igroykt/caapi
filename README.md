@@ -14,19 +14,30 @@ Microsoft Certificate Authority библиотека для Python
 
 ![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_obshie.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_sovmestimost.png?raw=true)
+![Совместимость](https://github.com/igroykt/caapi/blob/master/assets/template_sovmestimost.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_bezopasnost.png?raw=true)
+![Безопасность](https://github.com/igroykt/caapi/blob/master/assets/template_bezopasnost.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_obrabotka.png?raw=true)
+![Обработка](https://github.com/igroykt/caapi/blob/master/assets/template_obrabotka.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_shifrovanie.png?raw=true)
+![Шифрование](https://github.com/igroykt/caapi/blob/master/assets/template_shifrovanie.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_subject.png?raw=true)
+![Субъект](https://github.com/igroykt/caapi/blob/master/assets/template_subject.png?raw=true)
 
-![Общие](https://github.com/igroykt/caapi/blob/master/assets/template_vidacha.png?raw=true)
+![Выдача](https://github.com/igroykt/caapi/blob/master/assets/template_vidacha.png?raw=true)
 
 В остальных вкладках все оставляем по-умолчанию.
+
+# Настройка SSH
+Говорят сейчас Windows Server по-умолчанию идет с ssh. Но если у вас обновленный сервер, то он вряд ли есть. Я ставил с репозитория [chocolatey](https://chocolatey.org). Генерируем ключ на Linux сервере:
+```bash
+ssh-keygen -t rsa
+cat /path/to/id_rsa.pub
+```
+Открытый ключ прописываем на Windows Server по пути %programdata%\ssh\administrators_authorized_keys. Проверяем подключение:
+```bash
+ssh administrator@winserv_ip 'whoami'
+```
 
 # Методы
 * generate_config(user_fullname, user_dn, user_mail, user_domain) bool -> генерирует конфигурацию для запроса сертификата пользователя
