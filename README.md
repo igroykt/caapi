@@ -1,5 +1,5 @@
 # CAApi
-Microsoft Certificate Authority библиотека для Python
+Microsoft Certificate Authority библиотека для Python. Пригодится, если надо поднять PKI на Linux завязанный под Центр сертификации Windows Server (например для массовой выдачи неквалифицрованных электронных подписей).
 
 # Зависимости
 * Python 3.x
