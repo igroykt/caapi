@@ -65,7 +65,7 @@ cas = CAApi(
     "administrator",
     "c:\\temp", #директория для временных файлов
     "./certs", #локальная директория хранения сертификатов
-    "CONTOSO\dc-CONTOSO-CA-1",
+    "CONTOSO\\dc-CONTOSO-CA-1",
     cert_template
 )
 cas.generate_config("Vasya Pupkin", "vasya@dc.example.com", "vasya@example.com", "CONTOSO")
