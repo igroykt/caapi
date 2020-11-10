@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import configparser
+import os.path
 
 class CAApi:
     server = ""
@@ -32,6 +33,7 @@ class CAApi:
             return e
 
     def scp_put(self, source, destination):
+        destination = destination.replace("\\", "\\\\")
         try:
             self.call(f"scp -o 'StrictHostKeyChecking no' {source} {self.user}@{self.server}:{destination}")
             return True
@@ -39,6 +41,7 @@ class CAApi:
             return e
 
     def scp_get(self, source, destination):
+        source = source.replace("\\", "\\\\")
         try:
             self.call(f"scp -o 'StrictHostKeyChecking no' {self.user}@{self.server}:{source} {destination}")
             return True
@@ -48,6 +51,8 @@ class CAApi:
     def generate_config(self, user_fullname, user_dn, user_mail, user_domain):
         dn = user_dn.split("@")
         requester = dn[0]
+        if os.path.isfile(f"/tmp/{requester}.ini"):
+            os.remove(f"/tmp/{requester}.ini")
         config = configparser.ConfigParser()
         config['Version'] = {
             'Signature': '"$Windows NT$"'
@@ -78,30 +83,41 @@ class CAApi:
         except Exception as e:
             return e
 
+    def generate_payload(self, user_dn, cert_pass, cep_cert):
+        dn = user_dn.split("@")
+        requester = dn[0]
+        if os.path.isfile(f"/tmp/{requester}.bat"):
+            os.remove(f"/tmp/{requester}.bat")
+        f = open(f"/tmp/{requester}.bat", "a")
+        f.write(f"certreq -f -new -config {self.ca_name} {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.req\r\n")
+        f.write(f"certreq -f -q -config {self.ca_name} -sign -cert {cep_cert} {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}_signed.req\r\n")
+        f.write(f"certreq -f -submit -config {self.ca_name} -attrib CertificateTemplate:{self.cert_template} {self.remote_tmp}\\{requester}_signed.req {self.remote_tmp}\\{requester}.cer\r\n")
+        f.write(f"certutil -addstore -f MY {self.remote_tmp}\\{requester}.cer\r\n")
+        f.write(f"certutil -repairstore MY {user_dn}\r\n")
+        f.write(f"certutil -p {cert_pass} -exportPFX {user_dn} {self.remote_tmp}\\{requester}.pfx\r\n")
+        f.write(f"certutil -privatekey -delstore MY {user_dn}")
+        f.close()
+
     def generate_cert(self, user_dn, cert_pass, cep_cert):
+        dn = user_dn.split("@")
+        requester = dn[0]
         try:
-            dn = user_dn.split("@")
-            requester = dn[0]
-            self.scp_put(f"/tmp/{requester}.ini, {self.remote_tmp}")
-            self.ssh(f"certreq -f -new -config {self.ca_name} {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.req")
-            self.ssh(f"certreq -f -q -config {self.ca_name} -sign -cert {cep_cert} {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}_signed.req")
-            self.ssh(f"certreq -submit -config {self.ca_name} -attrib 'CertificateTemplate: {self.cert_template}' {self.remote_tmp}\\{requester}_signed.req {self.remote_tmp}\\{requester}.cer")
-            self.ssh(f"certutil -addstore -f MY {self.remote_tmp}\\{requester}.cer")
-            self.ssh(f"certutil -repairstore MY {user_dn}")
-            self.ssh(f"certutil -p {cert_pass} -exportPFX {user_dn} {self.remote_tmp}\\{requester}.pfx")
-            self.ssh(f"certutil -privatekey –delstore MY {user_dn}")
+            self.scp_put(f"/tmp/{requester}.ini", self.remote_tmp)
+            self.generate_payload(user_dn, cert_pass, cep_cert)
+            self.scp_put(f"/tmp/{requester}.bat", self.remote_tmp)
+            self.ssh(f"{self.remote_tmp}\\{requester}.bat")
             if not os.path.isdir(self.local_storage):
                 os.mkdir(self.local_storage)
-            self.scp_get(f"{self.remote_tmp}\\{requester}.pfx, {self.local_storage}")
-            self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
+            self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
+            self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.bat {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
             return True
         except Exception as e:
             return e
 
     def revoke_cert(self, user_dn, cert_pass, reason):
+        dn = user_dn.split("@")
+        requester = dn[0]
         try:
-            dn = user_dn.split("@")
-            requester = dn[0]
             self.call(f"openssl pkcs12 -in {self.local_storage}/{requester}.pfx -out /tmp/{requester}.cer -nokeys -clcerts -passin pass:{cert_pass}")
             code, out, err = self.call(f"openssl x509 -noout -serial -in /tmp/{requester}.cer")
             out = out.split("=")
