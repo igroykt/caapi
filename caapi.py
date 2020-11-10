@@ -79,7 +79,9 @@ class CAApi:
                 config.write(configfile)
             self.call(f"sed -i '$ d' /tmp/{requester}.ini")
             self.call(f"echo '_continue_ = \"upn={user_dn}&\"' >> /tmp/{requester}.ini")
-            return True
+            if os.path.isfile(f"/tmp/{requester}.ini"):
+                return True
+            return False
         except Exception as e:
             return e
 
@@ -97,21 +99,26 @@ class CAApi:
         f.write(f"certutil -p {cert_pass} -exportPFX {user_dn} {self.remote_tmp}\\{requester}.pfx\r\n")
         f.write(f"certutil -privatekey -delstore MY {user_dn}")
         f.close()
+        if os.path.isfile(f"/tmp/{requester}.bat"):
+            return True
+        return False
 
     def generate_cert(self, user_dn, cert_pass, cep_cert):
         dn = user_dn.split("@")
         requester = dn[0]
         try:
             self.scp_put(f"/tmp/{requester}.ini", self.remote_tmp)
-            self.generate_payload(user_dn, cert_pass, cep_cert)
-            self.scp_put(f"/tmp/{requester}.bat", self.remote_tmp)
-            self.ssh(f"{self.remote_tmp}\\{requester}.bat")
-            if not os.path.isdir(self.local_storage):
-                os.mkdir(self.local_storage)
-            self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
-            self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.bat {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
-            self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
-            return True
+            payload = self.generate_payload(user_dn, cert_pass, cep_cert)
+            if payload:
+                self.scp_put(f"/tmp/{requester}.bat", self.remote_tmp)
+                self.ssh(f"{self.remote_tmp}\\{requester}.bat")
+                if not os.path.isdir(self.local_storage):
+                    os.mkdir(self.local_storage)
+                self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
+                self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.bat {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
+                self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
+                return True
+            return False
         except Exception as e:
             return e
 
@@ -127,6 +134,8 @@ class CAApi:
             serial = out[1]
             self.ssh(f"certutil -config {self.ca_name} -revoke \"{serial}\" {reason}")
             self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester}.pfx")
-            return True
+            if not os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
+                return True
+            return False
         except Exception as e:
             return e
