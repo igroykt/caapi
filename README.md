@@ -78,9 +78,9 @@ Get-CATemplate
 ```
 
 # Методы
-* generate_config(user_fullname, user_dn, user_mail, user_domain) bool -> генерирует конфигурацию для запроса сертификата пользователя
-* generate_cert(user_dn, cert_pass, cep_cert) bool -> генерирует сертификат пользователя
-* revoke_cert(user_dn, cert_pass, reason) bool -> отзывает сертификат пользователя
+* generate_config(user_fullname, user_principalname, user_mail, user_domain) bool -> генерирует конфигурацию для запроса сертификата пользователя
+* generate_cert(user_principalname, cert_pass, cep_cert) bool -> генерирует сертификат пользователя
+* revoke_cert(user_principalname, cert_pass, reason) bool -> отзывает сертификат пользователя
 
 Название ЦС (ca_name) можно увидеть в оснастке "Центр сертификации".
 
