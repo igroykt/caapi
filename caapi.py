@@ -110,6 +110,7 @@ class CAApi:
                 os.mkdir(self.local_storage)
             self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
             self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.bat {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
+            self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
             return True
         except Exception as e:
             return e
@@ -118,12 +119,14 @@ class CAApi:
         dn = user_dn.split("@")
         requester = dn[0]
         try:
+            if os.path.isfile(f"/tmp/{requester}.cer"):
+                os.remove(f"/tmp/{requester}.cer")
             self.call(f"openssl pkcs12 -in {self.local_storage}/{requester}.pfx -out /tmp/{requester}.cer -nokeys -clcerts -passin pass:{cert_pass}")
             code, out, err = self.call(f"openssl x509 -noout -serial -in /tmp/{requester}.cer")
             out = out.split("=")
             serial = out[1]
-            self.ssh(f"certutil -config {self.ca_name} -revoke {serial}")
-            self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester} {reason}")
+            self.ssh(f"certutil -config {self.ca_name} -revoke \"{serial}\" {reason}")
+            self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester}.pfx")
             return True
         except Exception as e:
             return e
