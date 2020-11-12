@@ -114,6 +114,8 @@ class CAApi:
                 self.ssh(f"{self.remote_tmp}\\{requester}.bat")
                 if not os.path.isdir(self.local_storage):
                     os.mkdir(self.local_storage)
+                if os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
+                    os.remove(f"{self.local_storage}/{requester}.pfx")
                 self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
                 self.ssh(f"del /F /Q {self.remote_tmp}\\{requester}.bat {self.remote_tmp}\\{requester}.cer {self.remote_tmp}\\{requester}.ini {self.remote_tmp}\\{requester}.pfx {self.remote_tmp}\\{requester}.req {self.remote_tmp}\\{requester}.rsp {self.remote_tmp}\\{requester}_signed.req")
                 self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
