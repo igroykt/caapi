@@ -35,15 +35,17 @@ class CAApi:
             return e
 
     def scp_put(self, source, destination):
-        #destination = destination.replace("\\", "\\\\")
+        destination = destination.replace("\\", "\\\\")
         try:
+            if self.backward_compat:
+                self.call(f"scp -o 'StrictHostKeyChecking no' -T {source} {self.user}@{self.server}:{destination}")
             self.call(f"scp -o 'StrictHostKeyChecking no' {source} {self.user}@{self.server}:{destination}")
             return True
         except Exception as e:
             return e
 
     def scp_get(self, source, destination):
-        #source = source.replace("\\", "\\\\")
+        source = source.replace("\\", "\\\\")
         try:
             if self.backward_compat:
                 self.call(f"scp -o 'StrictHostKeyChecking no' -T {self.user}@{self.server}:{source} {destination}")
