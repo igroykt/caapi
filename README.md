@@ -56,6 +56,10 @@ from caapi import CAApi
 
 cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template)
 ```
+Если версия SSH сервера на Windows Server ниже 8, то при инициализации надо добавить параметр обратной совместимости для нормальной работы SCP:
+```
+cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template, backward_compat=True)
+```
 
 # Пример
 ```python
