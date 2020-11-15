@@ -41,7 +41,7 @@ class CAApi:
             return e
 
     def scp_get(self, source, destination):
-        source = source.replace("\\", "\\\\")
+        #source = source.replace("\\", "\\\\")
         try:
             self.call(f"scp -o 'StrictHostKeyChecking no' {self.user}@{self.server}:{source} {destination}")
             return True
