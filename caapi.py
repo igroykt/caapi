@@ -11,14 +11,16 @@ class CAApi:
     local_storage = ""
     ca_name = ""
     cert_template = ""
+    backward_compat = False
 
-    def __init__(self, server, user, remote_tmp, local_storage, ca_name, cert_template):
+    def __init__(self, server, user, remote_tmp, local_storage, ca_name, cert_template, backward_compat):
         self.server = server
         self.user = user
         self.remote_tmp = remote_tmp
         self.local_storage = local_storage
         self.ca_name = ca_name
         self.cert_template = cert_template
+        self.backward_compat = backward_compat
 
     def call(self, command):
 	    process = subprocess.Popen(command,stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell = True, universal_newlines = True, errors = "ignore")
@@ -41,8 +43,10 @@ class CAApi:
             return e
 
     def scp_get(self, source, destination):
-        #source = source.replace("\\", "\\\\")
+        source = source.replace("\\", "\\\\")
         try:
+            if self.backward_compat:
+                self.call(f"scp -o 'StrictHostKeyChecking no' -T {self.user}@{self.server}:{source} {destination}")
             self.call(f"scp -o 'StrictHostKeyChecking no' {self.user}@{self.server}:{source} {destination}")
             return True
         except Exception as e:
