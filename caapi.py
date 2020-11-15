@@ -137,6 +137,8 @@ class CAApi:
     def revoke_cert(self, user_pname, cert_pass, reason):
         pname = user_pname.split("@")
         requester = pname[0]
+        ca_tmp = self.ca_name.split("\\")
+        ca_tmp = list(filter(None, ca_tmp))
         try:
             if os.path.isfile(f"/tmp/{requester}.cer"):
                 os.remove(f"/tmp/{requester}.cer")
@@ -144,7 +146,7 @@ class CAApi:
             code, out, err = self.call(f"openssl x509 -noout -serial -in /tmp/{requester}.cer")
             out = out.split("=")
             serial = out[1]
-            self.ssh(f"certutil -config {self.ca_name} -revoke \"{serial}\" {reason}")
+            self.ssh(f"certutil -config {ca_tmp[0]}\{ca_tmp[1]} -revoke \"{serial}\" {reason}")
             self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester}.pfx")
             if not os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
                 return True
