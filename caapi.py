@@ -114,6 +114,8 @@ class CAApi:
     def generate_cert(self, user_pname, cert_pass, cep_cert):
         pname = user_pname.split("@")
         requester = pname[0]
+        rem_tmp = self.remote_tmp.split("\\")
+        rem_tmp = list(filter(None, rem_tmp))
         try:
             self.scp_put(f"/tmp/{requester}.ini", self.remote_tmp)
             payload = self.generate_payload(user_pname, cert_pass, cep_cert)
@@ -125,7 +127,7 @@ class CAApi:
                 if os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
                     os.remove(f"{self.local_storage}/{requester}.pfx")
                 self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
-                self.ssh(f"del /F /Q {self.remote_tmp}\{requester}.bat {self.remote_tmp}\{requester}.cer {self.remote_tmp}\{requester}.ini {self.remote_tmp}\{requester}.pfx {self.remote_tmp}\{requester}.req {self.remote_tmp}\{requester}.rsp {self.remote_tmp}\{requester}_signed.req")
+                self.ssh(f"del /F /Q {rem_tmp[0]}\{rem_tmp[1]}\{requester}.bat {rem_tmp[0]}\{rem_tmp[1]}\{requester}.cer {rem_tmp[0]}\{rem_tmp[1]}\{requester}.ini {rem_tmp[0]}\{rem_tmp[1]}\{requester}.pfx {rem_tmp[0]}\{rem_tmp[1]}\{requester}.req {rem_tmp[0]}\{rem_tmp[1]}\{requester}.rsp {rem_tmp[0]}\{rem_tmp[1]}\{requester}_signed.req")
                 self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
                 return True
             return False
