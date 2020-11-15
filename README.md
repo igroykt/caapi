@@ -54,12 +54,9 @@ ssh administrator@winserv_ip 'whoami'
 ```python
 from caapi import CAApi
 
-cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template)
+cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template, backward_compat=False)
 ```
-Если версия SSH сервера на Windows Server ниже 8, то при инициализации надо добавить параметр обратной совместимости для нормальной работы SCP:
-```
-cas = CAApi(winserv_ip, admin_login, remote_temp_dir, local_certs_dir, ca_name, cert_template, backward_compat=True)
-```
+Если версия SSH сервера на Windows Server ниже 8, а версия клиента 8 или выше, то backward_compat надо установить в True.
 
 # Пример
 ```python
@@ -70,7 +67,8 @@ cas = CAApi(
     "c:\\temp", #директория для временных файлов
     "./certs", #локальная директория хранения сертификатов
     "CONTOSO\\dc-CONTOSO-CA-1",
-    cert_template
+    cert_template,
+    backward_compat=False
 )
 cas.generate_config("Vasya Pupkin", "vasya@dc.example.com", "vasya@example.com", "CONTOSO")
 cas.generate_cert("vasya@dc.example.com", "123", "administrator")
