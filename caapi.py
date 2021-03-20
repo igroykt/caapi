@@ -29,7 +29,7 @@ class CAApi:
 
     def ssh(self, cmd):
         try:
-            code, out, err = self.call(f"ssh -o 'StrictHostKeyChecking no' {self.user}@{self.server} '{cmd}'")
+            code, out, err = self.call(f"ssh {self.user}@{self.server} '{cmd}'")
             return out.strip()
         except Exception as e:
             return e
@@ -37,9 +37,9 @@ class CAApi:
     def scp_put(self, source, destination):
         try:
             if self.backward_compat:
-                self.call(f"scp -o 'StrictHostKeyChecking no' -T {source} {self.user}@{self.server}:{repr(destination)}")
+                self.call(f"scp -T {source} {self.user}@{self.server}:{repr(destination)}")
             else:
-                self.call(f"scp -o 'StrictHostKeyChecking no' {source} {self.user}@{self.server}:{repr(destination)}")
+                self.call(f"scp {source} {self.user}@{self.server}:{repr(destination)}")
             return True
         except Exception as e:
             return e
@@ -47,9 +47,9 @@ class CAApi:
     def scp_get(self, source, destination):
         try:
             if self.backward_compat:
-                self.call(f"scp -o 'StrictHostKeyChecking no' -T {self.user}@{self.server}:{repr(source)} {destination}")
+                self.call(f"scp -T {self.user}@{self.server}:{repr(source)} {destination}")
             else:
-                self.call(f"scp -o 'StrictHostKeyChecking no' {self.user}@{self.server}:{repr(source)} {destination}")
+                self.call(f"scp {self.user}@{self.server}:{repr(source)} {destination}")
             return True
         except Exception as e:
             return e
