@@ -11,16 +11,14 @@ class CAApi:
     local_storage = ""
     ca_name = ""
     cert_template = ""
-    backward_compat = False
 
-    def __init__(self, server, user, remote_tmp, local_storage, ca_name, cert_template, backward_compat):
+    def __init__(self, server, user, remote_tmp, local_storage, ca_name, cert_template):
         self.server = server
         self.user = user
         self.remote_tmp = remote_tmp
         self.local_storage = local_storage
         self.ca_name = ca_name
         self.cert_template = cert_template
-        self.backward_compat = backward_compat
 
     def call(self, command):
 	    process = subprocess.Popen(command,stdout = subprocess.PIPE,stderr = subprocess.PIPE, shell = True, universal_newlines = True, errors = "ignore")
@@ -36,20 +34,14 @@ class CAApi:
 
     def scp_put(self, source, destination):
         try:
-            if self.backward_compat:
-                self.call(f"scp -T {source} {self.user}@{self.server}:{repr(destination)}")
-            else:
-                self.call(f"scp {source} {self.user}@{self.server}:{repr(destination)}")
+            self.call(f"scp {source} {self.user}@{self.server}:{repr(destination)}")
             return True
         except Exception as e:
             return e
 
     def scp_get(self, source, destination):
         try:
-            if self.backward_compat:
-                self.call(f"scp -T {self.user}@{self.server}:{repr(source)} {destination}")
-            else:
-                self.call(f"scp {self.user}@{self.server}:{repr(source)} {destination}")
+            self.call(f"scp {self.user}@{self.server}:{repr(source)} {destination}")
             return True
         except Exception as e:
             return e
