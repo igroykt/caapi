@@ -3,6 +3,7 @@ import sys
 import subprocess
 import configparser
 import os.path
+import paramiko
 
 class CAApi:
     server = ""
@@ -27,24 +28,49 @@ class CAApi:
 
     def ssh(self, cmd):
         try:
-            code, out, err = self.call(f"ssh {self.user}@{self.server} '{cmd}'")
-            return out.strip()
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.load_system_host_keys()
+            ssh.connect(self.server, username=self.user)
+            cmd = cmd.replace("\\\\", "\\")
+            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(cmd)
+            ssh_stdout.channel.recv_exit_status()
+            ssh.close()
+            return True
         except Exception as e:
-            return e
+            raise ValueError(f"SSH: command: {cmd}, error: {e}")
 
     def scp_put(self, source, destination):
         try:
-            self.call(f"scp {source} {self.user}@{self.server}:{repr(destination)}")
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.load_system_host_keys()
+            ssh.connect(self.server, username=self.user)
+            sftp = ssh.open_sftp()
+            destination = destination.replace("\\\\", "\\")
+            sftp.put(source, destination)
+            sftp.close()
+            if ssh:
+                ssh.close()
             return True
         except Exception as e:
-            return e
+            raise ValueError(f"SCP PUT: source: {source}, destination: {destination}, error: {e}")
 
     def scp_get(self, source, destination):
         try:
-            self.call(f"scp {self.user}@{self.server}:{repr(source)} {destination}")
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.load_system_host_keys()
+            ssh.connect(self.server, username=self.user)
+            sftp = ssh.open_sftp()
+            source = source.replace("\\\\", "\\")
+            sftp.get(source, destination)
+            sftp.close()
+            if ssh:
+                ssh.close()
             return True
         except Exception as e:
-            return e
+            raise ValueError(f"SCP GET: source: {source}, destination: {destination}, error: {e}")
 
     def generate_config(self, user_fullname, user_pname, user_mail, user_domain):
         pname = user_pname.split("@")
@@ -81,7 +107,7 @@ class CAApi:
                 return True
             return False
         except Exception as e:
-            return e
+            raise ValueError(f"Generate config: {e}")
 
     def generate_payload(self, user_pname, cert_pass, cep_cert):
         pname = user_pname.split("@")
@@ -111,22 +137,22 @@ class CAApi:
         rem_tmp = self.remote_tmp.split("\\")
         rem_tmp = list(filter(None, rem_tmp))
         try:
-            self.scp_put(f"/tmp/{requester}.ini", self.remote_tmp)
+            self.scp_put(f"/tmp/{requester}.ini", f"{self.remote_tmp}\\{requester}.ini")
             payload = self.generate_payload(user_pname, cert_pass, cep_cert)
             if payload:
-                self.scp_put(f"/tmp/{requester}.bat", self.remote_tmp)
+                self.scp_put(f"/tmp/{requester}.bat", f"{self.remote_tmp}\\{requester}.bat")
                 self.ssh(f"{self.remote_tmp}\\{requester}.bat")
                 if not os.path.isdir(self.local_storage):
                     os.mkdir(self.local_storage)
                 if os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
                     os.remove(f"{self.local_storage}/{requester}.pfx")
-                self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}")
+                self.scp_get(f"{self.remote_tmp}\\{requester}.pfx", f"{self.local_storage}/{requester}.pfx")
                 self.ssh(f"del /F /Q {rem_tmp[0]}\{rem_tmp[1]}\{requester}.bat {rem_tmp[0]}\{rem_tmp[1]}\{requester}.cer {rem_tmp[0]}\{rem_tmp[1]}\{requester}.ini {rem_tmp[0]}\{rem_tmp[1]}\{requester}.pfx {rem_tmp[0]}\{rem_tmp[1]}\{requester}.req {rem_tmp[0]}\{rem_tmp[1]}\{requester}.rsp {rem_tmp[0]}\{rem_tmp[1]}\{requester}_signed.req")
                 self.call(f"rm -f /tmp/{requester}.bat /tmp/{requester}.ini")
                 return True
             return False
         except Exception as e:
-            return e
+            raise ValueError(f"Generate cert: {e}")
 
     def revoke_cert(self, user_pname, cert_pass, reason):
         pname = user_pname.split("@")
@@ -140,7 +166,7 @@ class CAApi:
             code, out, err = self.call(f"openssl x509 -noout -serial -in /tmp/{requester}.cer")
             out = out.split("=")
             serial = out[1]
-            self.ssh(f"certutil -config {ca_tmp[0]}\{ca_tmp[1]} -revoke \"{serial}\" {reason}")
+            self.ssh(f"certutil -config {ca_tmp[0]}\\{ca_tmp[1]} -revoke \"{serial}\" {reason}")
             self.call(f"rm -f /tmp/{requester}.cer {self.local_storage}/{requester}.pfx")
             if not os.path.isfile(f"{self.local_storage}/{requester}.pfx"):
                 return True
