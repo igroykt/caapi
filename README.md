@@ -3,6 +3,7 @@ Microsoft Certificate Authority библиотека для Python. Пригод
 
 # Зависимости
 * Python 3.x
+* Paramiko
 * OpenSSH
 * OpenSSL
 
@@ -83,6 +84,8 @@ Get-CATemplate
 * generate_config(user_fullname, user_principalname, user_mail, user_domain) bool -> генерирует конфигурацию для запроса сертификата пользователя
 * generate_cert(user_principalname, cert_pass, cep_cert) bool -> генерирует сертификат пользователя
 * revoke_cert(user_principalname, cert_pass, reason) bool -> отзывает сертификат пользователя
+
+В generate_cert в параметре cep_cert есть ремарка. Обычно в качестве значения передается имя пользователя для которого выписан CEP сертификат (обычно это administrator). Но если у вас несколько CEP сертификатов, то certreq выдаст ошибку и попросит нажать кнопку "ОК" из-за чего все зависает. Потому если у вас более одного сертификата, то вместо имени пользователя лучше использовать серийный номер сертификата.
 
 Название ЦС (ca_name) можно увидеть в оснастке "Центр сертификации".
 
