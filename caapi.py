@@ -124,7 +124,7 @@ class CAApi:
         f.write(f"certreq -f -submit -config {ca_name[0]}\{ca_name[1]} -attrib CertificateTemplate:{self.cert_template} {remote_tmp[0]}\{remote_tmp[1]}\{requester}_signed.req {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
         f.write(f"certutil -addstore -f MY {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
         f.write(f"certutil -repairstore MY {user_pname}\r\n")
-        f.write(f"certutil -p {cert_pass} -exportPFX {user_pname} {remote_tmp[0]}\{remote_tmp[1]}\{requester}.pfx\r\n")
+        f.write(f"certutil -p {cert_pass} -exportPFX {user_pname} {remote_tmp[0]}\{remote_tmp[1]}\{requester.lower()}.pfx\r\n")
         f.write(f"certutil -privatekey -delstore MY {user_pname}")
         f.close()
         if os.path.isfile(f"/tmp/{requester}.bat"):
