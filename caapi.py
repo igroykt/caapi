@@ -72,9 +72,8 @@ class CAApi:
         except Exception as e:
             raise ValueError(f"SCP GET: source: {source}, destination: {destination}, error: {e}")
 
-    def generate_config(self, user_fullname, user_pname, user_mail, user_domain):
-        pname = user_pname.split("@")
-        requester = pname[0]
+    def generate_config(self, user_fullname, user_sname, user_mail, user_domain):
+        requester = user_sname
         if os.path.isfile(f"/tmp/{requester}.ini"):
             os.remove(f"/tmp/{requester}.ini")
         config = configparser.ConfigParser()
@@ -102,16 +101,15 @@ class CAApi:
             with open(f'/tmp/{requester}.ini', 'w') as configfile:
                 config.write(configfile)
             self.call(f"sed -i '$ d' /tmp/{requester}.ini")
-            self.call(f"echo '_continue_ = \"upn={user_pname}&\"' >> /tmp/{requester}.ini")
+            self.call(f"echo '_continue_ = \"upn={user_sname}&\"' >> /tmp/{requester}.ini")
             if os.path.isfile(f"/tmp/{requester}.ini"):
                 return True
             return False
         except Exception as e:
             raise ValueError(f"Generate config: {e}")
 
-    def generate_payload(self, user_pname, cert_pass, cep_cert):
-        pname = user_pname.split("@")
-        requester = pname[0]
+    def generate_payload(self, user_sname, cert_pass, cep_cert):
+        requester = user_sname
         ca_name = self.ca_name.split("\\")
         ca_name = list(filter(None, ca_name))
         remote_tmp = self.remote_tmp.split("\\")
@@ -123,22 +121,21 @@ class CAApi:
         f.write(f"certreq -f -q -config {ca_name[0]}\{ca_name[1]} -sign -cert {cep_cert} {remote_tmp[0]}\{remote_tmp[1]}\{requester}.req {remote_tmp[0]}\{remote_tmp[1]}\{requester}_signed.req\r\n")
         f.write(f"certreq -f -submit -config {ca_name[0]}\{ca_name[1]} -attrib CertificateTemplate:{self.cert_template} {remote_tmp[0]}\{remote_tmp[1]}\{requester}_signed.req {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
         f.write(f"certutil -addstore -f MY {remote_tmp[0]}\{remote_tmp[1]}\{requester}.cer\r\n")
-        f.write(f"certutil -repairstore MY {user_pname}\r\n")
-        f.write(f"certutil -p {cert_pass} -exportPFX {user_pname} {remote_tmp[0]}\{remote_tmp[1]}\{requester.lower()}.pfx\r\n")
-        f.write(f"certutil -privatekey -delstore MY {user_pname}")
+        f.write(f"certutil -repairstore MY {user_sname}\r\n")
+        f.write(f"certutil -p {cert_pass} -exportPFX {user_sname} {remote_tmp[0]}\{remote_tmp[1]}\{requester.lower()}.pfx\r\n")
+        f.write(f"certutil -privatekey -delstore MY {user_sname}")
         f.close()
         if os.path.isfile(f"/tmp/{requester}.bat"):
             return True
         return False
 
-    def generate_cert(self, user_pname, cert_pass, cep_cert):
-        pname = user_pname.split("@")
-        requester = pname[0]
+    def generate_cert(self, user_sname, cert_pass, cep_cert):
+        requester = user_sname
         rem_tmp = self.remote_tmp.split("\\")
         rem_tmp = list(filter(None, rem_tmp))
         try:
             self.scp_put(f"/tmp/{requester}.ini", f"{self.remote_tmp}\\{requester}.ini")
-            payload = self.generate_payload(user_pname, cert_pass, cep_cert)
+            payload = self.generate_payload(user_sname, cert_pass, cep_cert)
             if payload:
                 self.scp_put(f"/tmp/{requester}.bat", f"{self.remote_tmp}\\{requester}.bat")
                 self.ssh(f"{self.remote_tmp}\\{requester}.bat")
@@ -154,9 +151,8 @@ class CAApi:
         except Exception as e:
             raise ValueError(f"Generate cert: {e}")
 
-    def revoke_cert(self, user_pname, cert_pass, reason):
-        pname = user_pname.split("@")
-        requester = pname[0]
+    def revoke_cert(self, user_sname, cert_pass, reason):
+        requester = user_sname
         ca_tmp = self.ca_name.split("\\")
         ca_tmp = list(filter(None, ca_tmp))
         try:
