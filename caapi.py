@@ -138,7 +138,7 @@ class CAApi:
         rem_tmp = list(filter(None, rem_tmp))
         try:
             self.scp_put(f"/tmp/{requester}.ini", f"{self.remote_tmp}\\{requester}.ini")
-            payload = self.generate_payload(user_sname, cert_pass, cep_cert)
+            payload = self.generate_payload(user_pname, cert_pass, cep_cert)
             if payload:
                 self.scp_put(f"/tmp/{requester}.bat", f"{self.remote_tmp}\\{requester}.bat")
                 self.ssh(f"{self.remote_tmp}\\{requester}.bat")
